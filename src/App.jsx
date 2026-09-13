@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import Blog from './components/Blog'
+import BlogForm from './components/BlogForm'
 import Notification from './components/Notification'
+import Togglable from './components/Togglable'
 import blogService from './services/blogs'
 import loginService from './services/login'
 
@@ -9,11 +11,9 @@ const App = () => {
   const [user, setUser] = useState(null)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [title, setTitle] = useState('')
-  const [author, setAuthor] = useState('')
-  const [url, setUrl] = useState('')
   const [notification, setNotification] = useState(null)
   const notificationTimer = useRef(null)
+  const blogFormRef = useRef(null)
 
   const showNotification = (message, type = 'success') => {
     if (notificationTimer.current) window.clearTimeout(notificationTimer.current)
@@ -66,20 +66,42 @@ const App = () => {
     setUser(null)
   }
 
-  const addBlog = async (event) => {
-    event.preventDefault()
+  const addBlog = async (blogObject) => {
     try {
-      const createdBlog = await blogService.create({ title, author, url })
+      const createdBlog = await blogService.create(blogObject)
       setBlogs(blogs.concat(createdBlog))
-      showNotification('a new blog ' + createdBlog.title + ' by ' + createdBlog.author + ' added')
-      setTitle('')
-      setAuthor('')
-      setUrl('')
+      showNotification(`a new blog ${createdBlog.title} by ${createdBlog.author} added`)
+      blogFormRef.current?.toggleVisibility()
+      return createdBlog
     } catch (error) {
       const message = error.response?.data?.error ?? 'Could not create blog'
       showNotification(message, 'error')
+      throw error
     }
   }
+
+  const updateBlog = async (id, blogObject) => {
+    try {
+      const updatedBlog = await blogService.update(id, blogObject)
+      setBlogs(blogs.map(blog => (blog.id !== id ? blog : updatedBlog)))
+    } catch (error) {
+      const message = error.response?.data?.error ?? 'Could not update blog'
+      showNotification(message, 'error')
+    }
+  }
+
+  const deleteBlog = async (id) => {
+    try {
+      await blogService.remove(id)
+      setBlogs(blogs.filter(blog => blog.id !== id))
+      showNotification('Blog removed')
+    } catch (error) {
+      const message = error.response?.data?.error ?? 'Could not delete blog'
+      showNotification(message, 'error')
+    }
+  }
+
+  const sortedBlogs = [...blogs].sort((a, b) => b.likes - a.likes)
 
   if (user === null) {
     return (
@@ -124,43 +146,20 @@ const App = () => {
         <button type="button" onClick={handleLogout}>logout</button>
       </p>
 
-      <h2>Create new</h2>
-      <form onSubmit={addBlog}>
-        <label>
-          title
-          <input
-            id="title"
-            name="title"
-            value={title}
-            onChange={({ target }) => setTitle(target.value)}
-            required
-          />
-        </label>
-        <label>
-          author
-          <input
-            id="author"
-            name="author"
-            value={author}
-            onChange={({ target }) => setAuthor(target.value)}
-          />
-        </label>
-        <label>
-          url
-          <input
-            id="url"
-            name="url"
-            type="url"
-            value={url}
-            onChange={({ target }) => setUrl(target.value)}
-            required
-          />
-        </label>
-        <button type="submit">create</button>
-      </form>
+      <Togglable buttonLabel="create new blog" ref={blogFormRef}>
+        <BlogForm createBlog={addBlog} />
+      </Togglable>
 
       <h2>Blogs</h2>
-      {blogs.map(blog => <Blog key={blog.id} blog={blog} />)}
+      {sortedBlogs.map(blog => (
+        <Blog
+          key={blog.id}
+          blog={blog}
+          user={user}
+          updateBlog={updateBlog}
+          deleteBlog={deleteBlog}
+        />
+      ))}
     </main>
   )
 }
