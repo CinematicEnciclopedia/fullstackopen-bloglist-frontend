@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3003',
+        target: process.env.VITE_API_URL || 'http://localhost:3003',
         changeOrigin: true
       }
     }
@@ -15,6 +15,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: './testSetup.js'
+    setupFiles: './testSetup.js',
+    include: ['src/**/*.{test,spec}.{js,jsx}']
   }
 })
