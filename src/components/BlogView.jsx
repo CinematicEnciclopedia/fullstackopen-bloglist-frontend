@@ -36,13 +36,17 @@ const BlogView = ({ blogs, user, updateBlog, deleteBlog }) => {
   return (
     <div className="blog-details">
       <h2>{blog.title} by {blog.author}</h2>
-      <div><a href={blog.url}>{blog.url}</a></div>
-      <div>
-        likes {blog.likes}{' '}
-        {canLike && <button type="button" onClick={handleLike}>like</button>}
+      <div className="meta"><a href={blog.url}>{blog.url}</a></div>
+      <div className="meta">likes {blog.likes}</div>
+      <div className="meta">added by {blog.user?.name ?? blog.user?.username ?? ''}</div>
+      <div className="actions">
+        {canLike && (
+          <button type="button" className="primary" onClick={handleLike}>like</button>
+        )}
+        {showDelete && (
+          <button type="button" className="danger" onClick={handleDelete}>remove</button>
+        )}
       </div>
-      <div>added by {blog.user?.name ?? blog.user?.username ?? ''}</div>
-      {showDelete && <button type="button" onClick={handleDelete}>remove</button>}
     </div>
   )
 }

@@ -41,7 +41,7 @@ const LoginForm = ({ onLogin }) => {
             autoComplete="current-password"
           />
         </label>
-        <button type="submit">login</button>
+        <button type="submit" className="primary">login</button>
       </form>
     </div>
   )

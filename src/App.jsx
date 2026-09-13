@@ -100,17 +100,15 @@ const App = () => {
     }
   }
 
-  const padding = { padding: 5 }
-
   return (
     <main>
       <nav>
-        <Link style={padding} to="/">blogs</Link>
-        {user && <Link style={padding} to="/create">new blog</Link>}
+        <Link to="/">blogs</Link>
+        {user && <Link to="/create">new blog</Link>}
         {user === null
-          ? <Link style={padding} to="/login">login</Link>
+          ? <Link to="/login">login</Link>
           : (
-            <span style={padding}>
+            <span className="nav-user">
               {user.name} logged in{' '}
               <button type="button" onClick={handleLogout}>logout</button>
             </span>

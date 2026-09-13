@@ -54,7 +54,7 @@ const BlogForm = ({ createBlog }) => {
             required
           />
         </label>
-        <button type="submit">create</button>
+        <button type="submit" className="primary">create</button>
       </form>
     </div>
   )
