@@ -17,6 +17,19 @@ main {
   border-radius: 10px;
 }
 
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #dfe4ec;
+}
+
+nav a {
+  font-weight: 600;
+}
+
 form {
   display: grid;
   gap: 10px;
@@ -40,6 +53,22 @@ button {
   width: fit-content;
   padding: 7px 12px;
   cursor: pointer;
+}
+
+.blog {
+  padding-top: 10px;
+  padding-left: 2px;
+  border: solid;
+  border-width: 1px;
+  margin-bottom: 5px;
+}
+
+.blog-details {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid #dfe4ec;
+  border-radius: 6px;
 }
 
 .notification {

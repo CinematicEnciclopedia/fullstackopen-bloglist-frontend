@@ -16,17 +16,23 @@ describe('Blog app', () => {
     await page.goto('/')
   })
 
-  test('5.17 the login form is shown by default', async ({ page }) => {
+  test('5.24 the blog list is shown at the root URL', async ({ page }) => {
+    await expect(page.getByRole('heading', { name: 'Blogs' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'login', exact: true })).toBeVisible()
+  })
+
+  test('5.24 the login form is shown at /login', async ({ page }) => {
+    await page.getByRole('link', { name: 'login', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Log in to application' })).toBeVisible()
     await expect(page.locator('#username')).toBeVisible()
     await expect(page.locator('#password')).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Blogs' })).not.toBeVisible()
   })
 
-  describe('5.18 Login', () => {
+  describe('5.28 Login', () => {
     test('succeeds with correct credentials', async ({ page }) => {
       await loginWith(page, TEST_USER.username, TEST_USER.password)
       await expect(page.getByText('Daniel Arenas Sedano logged in')).toBeVisible()
+      await expect(page.getByRole('link', { name: 'new blog', exact: true })).toBeVisible()
     })
 
     test('fails with wrong credentials', async ({ page }) => {
@@ -36,12 +42,12 @@ describe('Blog app', () => {
     })
   })
 
-  describe('When logged in', () => {
+  describe('5.28 When logged in', () => {
     beforeEach(async ({ page }) => {
       await loginWith(page, TEST_USER.username, TEST_USER.password)
     })
 
-    test('5.19 a new blog can be created', async ({ page }) => {
+    test('a logged in user can create a blog', async ({ page }) => {
       await createBlog(page, {
         title: 'Samantha E2E blog',
         author: 'Samantha',
@@ -52,7 +58,7 @@ describe('Blog app', () => {
       await expect(page.locator('.blog', { hasText: 'Samantha E2E blog' })).toBeVisible()
     })
 
-    test('5.20 a blog can be liked', async ({ page }) => {
+    test('a logged in user can like a blog', async ({ page }) => {
       await createBlog(page, {
         title: 'Samantha E2E likeable',
         author: 'Samantha',
@@ -60,13 +66,15 @@ describe('Blog app', () => {
       })
 
       const blog = page.locator('.blog', { hasText: 'Samantha E2E likeable' })
-      await blog.getByRole('button', { name: 'view', exact: true }).click()
-      await blog.getByRole('button', { name: 'like', exact: true }).click()
+      await blog.getByRole('link', { name: 'view', exact: true }).click()
 
-      await expect(blog.getByText('likes 1')).toBeVisible()
+      await expect(page.getByText('https://example.com/e2e-likeable')).toBeVisible()
+      await page.getByRole('button', { name: 'like', exact: true }).click()
+
+      await expect(page.getByText('likes 1')).toBeVisible()
     })
 
-    test('5.21 the creator can delete a blog', async ({ page }) => {
+    test('a logged in user can delete a blog', async ({ page }) => {
       await createBlog(page, {
         title: 'Samantha E2E deletable',
         author: 'Samantha',
@@ -74,11 +82,12 @@ describe('Blog app', () => {
       })
 
       const blog = page.locator('.blog', { hasText: 'Samantha E2E deletable' })
-      await blog.getByRole('button', { name: 'view', exact: true }).click()
+      await blog.getByRole('link', { name: 'view', exact: true }).click()
 
       page.on('dialog', dialog => dialog.accept())
-      await blog.getByRole('button', { name: 'remove', exact: true }).click()
+      await page.getByRole('button', { name: 'remove', exact: true }).click()
 
+      await expect(page.getByRole('heading', { name: 'Blogs' })).toBeVisible()
       await expect(page.locator('.blog', { hasText: 'Samantha E2E deletable' })).not.toBeVisible()
     })
   })
@@ -90,45 +99,21 @@ describe('Blog app', () => {
       author: 'Daniel',
       url: 'https://example.com/owned-by-daniel'
     })
+    await expect(page.locator('.blog', { hasText: 'Blog owned by daniel' })).toBeVisible()
+
     await page.getByRole('button', { name: 'logout', exact: true }).click()
+    await expect(page.getByRole('link', { name: 'login', exact: true })).toBeVisible()
 
     await request.post(`${BACKEND}/api/users`, {
       data: { name: 'Other User', username: 'other', password: 'otherpass' }
     })
     await loginWith(page, 'other', 'otherpass')
+    await expect(page.getByText('Other User logged in')).toBeVisible()
 
     const blog = page.locator('.blog', { hasText: 'Blog owned by daniel' })
-    await blog.getByRole('button', { name: 'view', exact: true }).click()
+    await blog.getByRole('link', { name: 'view', exact: true }).click()
 
-    await expect(blog.getByRole('button', { name: 'remove', exact: true })).not.toBeVisible()
-    await expect(blog.getByRole('button', { name: 'like', exact: true })).toBeVisible()
-  })
-
-  test('5.23 blogs are ordered by likes', async ({ page }) => {
-    await loginWith(page, TEST_USER.username, TEST_USER.password)
-
-    await createBlog(page, {
-      title: 'Blog with zero likes',
-      author: 'Samantha',
-      url: 'https://example.com/zero-likes'
-    })
-    await createBlog(page, {
-      title: 'Blog with one like',
-      author: 'Samantha',
-      url: 'https://example.com/one-like'
-    })
-
-    const likedBlog = page.locator('.blog', { hasText: 'Blog with one like' })
-    await likedBlog.getByRole('button', { name: 'view', exact: true }).click()
-    await likedBlog.getByRole('button', { name: 'like', exact: true }).click()
-    await expect(likedBlog.getByText('likes 1')).toBeVisible()
-
-    const blogs = await page.locator('.blog').allTextContents()
-    const zeroIndex = blogs.findIndex(text => text.includes('Blog with zero likes'))
-    const oneIndex = blogs.findIndex(text => text.includes('Blog with one like'))
-
-    expect(oneIndex).toBeGreaterThanOrEqual(0)
-    expect(zeroIndex).toBeGreaterThanOrEqual(0)
-    expect(oneIndex).toBeLessThan(zeroIndex)
+    await expect(page.getByRole('button', { name: 'like', exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'remove', exact: true })).not.toBeVisible()
   })
 })

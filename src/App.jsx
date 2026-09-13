@@ -1,19 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
-import Blog from './components/Blog'
+import { Link, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import BlogForm from './components/BlogForm'
+import BlogList from './components/BlogList'
+import BlogView from './components/BlogView'
+import LoginForm from './components/LoginForm'
 import Notification from './components/Notification'
-import Togglable from './components/Togglable'
 import blogService from './services/blogs'
 import loginService from './services/login'
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
   const [user, setUser] = useState(null)
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
   const [notification, setNotification] = useState(null)
   const notificationTimer = useRef(null)
-  const blogFormRef = useRef(null)
+  const navigate = useNavigate()
 
   const showNotification = (message, type = 'success') => {
     if (notificationTimer.current) window.clearTimeout(notificationTimer.current)
@@ -45,18 +45,17 @@ const App = () => {
     }
   }, [])
 
-  const handleLogin = async (event) => {
-    event.preventDefault()
+  const handleLogin = async ({ username, password }) => {
     try {
       const loggedUser = await loginService.login({ username, password })
       window.localStorage.setItem('loggedBlogappUser', JSON.stringify(loggedUser))
       blogService.setToken(loggedUser.token)
       setUser(loggedUser)
-      setUsername('')
-      setPassword('')
+      return true
     } catch (error) {
       const message = error.response?.data?.error ?? 'Login failed'
       showNotification(message, 'error')
+      return false
     }
   }
 
@@ -64,6 +63,7 @@ const App = () => {
     window.localStorage.removeItem('loggedBlogappUser')
     blogService.setToken(null)
     setUser(null)
+    navigate('/')
   }
 
   const addBlog = async (blogObject) => {
@@ -71,7 +71,6 @@ const App = () => {
       const createdBlog = await blogService.create(blogObject)
       setBlogs(blogs.concat(createdBlog))
       showNotification(`a new blog ${createdBlog.title} by ${createdBlog.author} added`)
-      blogFormRef.current?.toggleVisibility()
       return createdBlog
     } catch (error) {
       const message = error.response?.data?.error ?? 'Could not create blog'
@@ -101,65 +100,43 @@ const App = () => {
     }
   }
 
-  const sortedBlogs = [...blogs].sort((a, b) => b.likes - a.likes)
-
-  if (user === null) {
-    return (
-      <main>
-        <h1>Blog list</h1>
-        <Notification notification={notification} />
-        <h2>Log in to application</h2>
-        <form onSubmit={handleLogin}>
-          <label>
-            username
-            <input
-              id="username"
-              name="username"
-              value={username}
-              onChange={({ target }) => setUsername(target.value)}
-              autoComplete="username"
-            />
-          </label>
-          <label>
-            password
-            <input
-              id="password"
-              name="password"
-              type="password"
-              value={password}
-              onChange={({ target }) => setPassword(target.value)}
-              autoComplete="current-password"
-            />
-          </label>
-          <button type="submit">login</button>
-        </form>
-      </main>
-    )
-  }
+  const padding = { padding: 5 }
 
   return (
     <main>
+      <nav>
+        <Link style={padding} to="/">blogs</Link>
+        {user && <Link style={padding} to="/create">new blog</Link>}
+        {user === null
+          ? <Link style={padding} to="/login">login</Link>
+          : (
+            <span style={padding}>
+              {user.name} logged in{' '}
+              <button type="button" onClick={handleLogout}>logout</button>
+            </span>
+          )}
+      </nav>
+
       <h1>Blog list</h1>
       <Notification notification={notification} />
-      <p>
-        {user.name} logged in{' '}
-        <button type="button" onClick={handleLogout}>logout</button>
-      </p>
 
-      <Togglable buttonLabel="create new blog" ref={blogFormRef}>
-        <BlogForm createBlog={addBlog} />
-      </Togglable>
-
-      <h2>Blogs</h2>
-      {sortedBlogs.map(blog => (
-        <Blog
-          key={blog.id}
-          blog={blog}
-          user={user}
-          updateBlog={updateBlog}
-          deleteBlog={deleteBlog}
-        />
-      ))}
+      <Routes>
+        <Route path="/blogs/:id" element={
+          <BlogView
+            blogs={blogs}
+            user={user}
+            updateBlog={updateBlog}
+            deleteBlog={deleteBlog}
+          />
+        } />
+        <Route path="/create" element={
+          // Si no hi ha sessio, tornem a la llista (no a /login): aixi el logout
+          // desde qualsevol ruta sempre acaba a la llista i no competeix amb aquesta guarda.
+          user ? <BlogForm createBlog={addBlog} /> : <Navigate replace to="/" />
+        } />
+        <Route path="/login" element={<LoginForm onLogin={handleLogin} />} />
+        <Route path="/" element={<BlogList blogs={blogs} />} />
+      </Routes>
     </main>
   )
 }
