@@ -1,6 +1,7 @@
 # Full Stack Open — Part 5 · Blog List frontend
 
-Frontend React 19 de la Blog List. Continua el backend de la Part 4.
+Frontend React 19 de la Blog List. Continua el backend de la Part 4:
+https://github.com/CinematicEnciclopedia/fullstackopen-bloglist
 
 ## Estat
 
