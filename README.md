@@ -1,8 +1,21 @@
-# React + Vite
+# Full Stack Open — Part 5 · Blog List frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend React 19 de la Blog List. Continua el backend de la Part 4.
 
-Currently, two official plugins are available:
+## Estat
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 5.1: login amb token JWT.
+- 5.2: sessió persistent amb localStorage i logout.
+- 5.3: creació autenticada de blogs.
+- 5.4: notificacions d'èxit i error.
+
+## Execució
+
+El backend de la Part 4 ha d'estar actiu a http://localhost:3003.
+
+```bash
+npm install
+npm run dev
+npm run build
+npm run lint
+```
